@@ -4,12 +4,19 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import mysql.connector
+
+# Validar si los secretos están configurados
+required_secrets = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+for secret in required_secrets:
+    if secret not in st.secrets:
+        st.error(f"Falta la configuración de {secret} en Streamlit Secrets.")
+        st.stop()
+
 # Usar variables de entorno desde Streamlit Secrets
 DB_HOST = st.secrets["DB_HOST"]
 DB_USER = st.secrets["DB_USER"]
 DB_PASSWORD = st.secrets["DB_PASSWORD"]
 DB_NAME = st.secrets["DB_NAME"]
-
 
 # Conectar a la base de datos usando las variables
 def connect_to_database():
@@ -24,7 +31,6 @@ def connect_to_database():
     except mysql.connector.Error as e:
         st.error(f"Error al conectar a la base de datos: {e}")
         return None
-
 
 # Ejecutar consultas SQL
 def run_query(query):
@@ -42,7 +48,6 @@ def run_query(query):
     except mysql.connector.Error as e:
         st.error(f"Error ejecutando la consulta SQL: {e}")
         return pd.DataFrame()
-
 
 # Cargar lista de equipos
 query_equipos = "SELECT id_equipo, equipo FROM equipo;"
@@ -161,6 +166,3 @@ else:
             # Mostrar datos filtrados
             st.write("Datos filtrados:")
             st.dataframe(filtered_data)
-
-
-
