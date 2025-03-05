@@ -142,9 +142,11 @@ else:
                 y='elo_despues',
                 hue='Equipo',
                 marker='o',
-                palette=team_colors,
+                palette=equipo_colores,
                 linestyle='-'
             )
+
+            # hace las x
 
             for equipo in filtered_data['Equipo'].unique():
                 subset = filtered_data[filtered_data['Equipo'] == equipo]
@@ -152,7 +154,7 @@ else:
                     subset['id_partido_aux'],
                     subset['elo_oponente'],
                     marker='x',
-                    color=team_colors[equipo],
+                    color=equipo_colores[equipo],
                     label=f'ELO Oponente ({equipo})'
                 )
 
@@ -163,6 +165,140 @@ else:
             plt.grid(True)
             st.pyplot(plt)
 
+            resultado_colores = {
+                'gano': 'green',  # Verde para ganados
+                'perdio': 'red',  # Rojo para perdidos
+                'empato': 'blue'  # Azul para empates
+            }
+
+            # Configurar la figura
+            plt.figure(figsize=(10, 8))
+
+            # Dibujar las líneas y puntos con diferentes colores según el resultado
+            for equipo in filtered_data['Equipo'].unique():
+                equipo_data = filtered_data[filtered_data['Equipo'] == equipo]
+
+                # Dibujar líneas continuas para cada equipo
+                plt.plot(
+                    equipo_data['id_partido_aux'],
+                    equipo_data['elo_despues'],
+                    label=f"{equipo}",  # Etiqueta del equipo
+                    color=equipo_colores[equipo],  # Usar el color asignado al equipo
+                    linestyle='-', linewidth=2
+                )
+
+                # Dibujar los puntos con colores específicos según el resultado
+                for resultado, color in resultado_colores.items():
+                    subset = equipo_data[equipo_data['resultado'] == resultado]
+                    plt.scatter(
+                        subset['id_partido_aux'],  # Eje X
+                        subset['elo_despues'],  # Eje Y
+                        color=color,  # Usar el color según el resultado
+                        marker='o',  # Marcador fijo (puedes cambiar esto si lo deseas)
+
+                        label=f"{resultado.capitalize()} ({equipo})" if resultado in equipo_data[
+                            'resultado'].unique() else None
+                    )
+                for equipo in filtered_data['Equipo'].unique():
+                    subset = filtered_data[filtered_data['Equipo'] == equipo]
+                    plt.scatter(
+                        subset['id_partido_aux'],
+                        subset['elo_oponente'],
+                        marker='x',
+                        color=equipo_colores[equipo],
+                        label=f'ELO Oponente ({equipo})'
+                    )
+
+            # Etiquetas y título
+            plt.xlabel('ID Partido Auxiliar (más antiguos a la izquierda)')
+            plt.ylabel('ELO')
+            plt.title('Evolución del ELO para Equipos Seleccionados')
+            plt.legend(title='Equipo y Resultado', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+            plt.grid(True)
+
+            # Mostrar la gráfica en Streamlit
+            st.pyplot(plt)
+
+            resultado_colores = {
+                'gano': 'green',  # Verde para ganados
+                'perdio': 'red',  # Rojo para perdidos
+                'empato': 'blue'  # Azul para empates
+            }
+
+            # Configurar la figura
+            plt.figure(figsize=(10, 8))
+
+            # Dibujar las líneas y puntos con diferentes colores según el resultado
+            for equipo in filtered_data['Equipo'].unique():
+                equipo_data = filtered_data[filtered_data['Equipo'] == equipo]
+
+                # Dibujar líneas continuas para cada equipo
+                plt.plot(
+                    equipo_data['id_partido_aux'],
+                    equipo_data['elo_despues'],
+                    label=f"{equipo}",  # Etiqueta del equipo
+                    color=equipo_colores[equipo],  # Usar el color asignado al equipo
+                    linestyle='-', linewidth=2
+                )
+
+                # Dibujar los puntos con colores específicos según el resultado
+                for resultado, color in resultado_colores.items():
+                    subset = equipo_data[equipo_data['resultado'] == resultado]
+                    plt.scatter(
+                        subset['id_partido_aux'],  # Eje X
+                        subset['elo_despues'],  # Eje Y
+                        color=color,  # Usar el color según el resultado
+                        marker='o',  # Marcador fijo (puedes cambiar esto si lo deseas)
+
+                        label=f"{resultado.capitalize()} ({equipo})" if resultado in equipo_data[
+                            'resultado'].unique() else None
+                    )
+
+            # Etiquetas y título
+            plt.xlabel('ID Partido Auxiliar (más antiguos a la izquierda)')
+            plt.ylabel('ELO')
+            plt.title('Evolución del ELO para Equipos Seleccionados')
+            plt.legend(title='Equipo y Resultado', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+            plt.grid(True)
+
+            # Mostrar la gráfica en Streamlit
+            st.pyplot(plt)
+
             # Mostrar datos filtrados
             st.write("Datos filtrados:")
             st.dataframe(filtered_data)
+
+            df_limpio = filtered_data[
+                ['Equipo', 'contrincante', 'goles_local', 'goles_equipo_visitante', 'resultado', 'posicion',
+                 'id_equipo']]
+
+            # Filtrar partidos donde ambos equipos (Equipo y contrincante) están en los seleccionados
+            df_limpio_filtrado = df_limpio[
+                (df_limpio['id_equipo'].isin(selected_ids)) &
+                (df_limpio['contrincante'].isin(
+                    df_equipos[df_equipos['id_equipo'].isin(selected_ids)]['equipo'].values))
+                ]
+
+            # Mostrar el DataFrame filtrado en Streamlit
+            st.subheader("Partidos entre Equipos Seleccionados")
+            st.dataframe(df_limpio_filtrado)
+            # Contar la cantidad de partidos ganados, empatados y perdidos por equipo
+            df_resultados = df_limpio_filtrado.groupby(['Equipo', 'resultado']).size().reset_index(name='cantidad')
+
+            # Crear el gráfico de barras
+            plt.figure(figsize=(10, 6))
+
+            # Dibujar un gráfico de barras para cada resultado
+            sns.barplot(data=df_resultados, x='Equipo', y='cantidad', hue='resultado')
+
+            # Configurar etiquetas y título
+            plt.xlabel('Equipo')
+            plt.ylabel('Cantidad de Partidos')
+            plt.title('Resultados de Partidos por Equipo (Ganados, Empatados y Perdidos)')
+            plt.legend(title='Resultado')
+            plt.xticks(rotation=45)
+            plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+            # Mostrar el gráfico en Streamlit
+            st.subheader("Resultados de Partidos por Equipo")
+            st.pyplot(plt)
