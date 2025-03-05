@@ -32,7 +32,7 @@ def connect_to_database():
         st.error(f"Error al conectar a la base de datos: {e}")
         return None
 
-# Ejecutar consultas SQL
+
 def run_query(query):
     try:
         db = connect_to_database()
@@ -48,6 +48,7 @@ def run_query(query):
     except mysql.connector.Error as e:
         st.error(f"Error ejecutando la consulta SQL: {e}")
         return pd.DataFrame()
+
 
 # Cargar lista de equipos
 query_equipos = "SELECT id_equipo, equipo FROM equipo;"
@@ -75,19 +76,35 @@ else:
         query_elo_filtrado = f"""
         SELECT 
             v.Equipo,
+            v.contrincante,
             v.id_equipo,
             v.elo_despues,
             v.id_partido,
             Partidos.id_torneo,
-            v.elo_oponente
+            v.elo_oponente,
+            Partidos.goles_local,
+            Partidos.goles_equipo_visitante,
+            v.posicion,
+            CASE 
+                WHEN v.posicion = 'local' AND Partidos.goles_local > Partidos.goles_equipo_visitante THEN 'gano'
+                WHEN v.posicion = 'local' AND Partidos.goles_local < Partidos.goles_equipo_visitante THEN 'perdio'
+                WHEN v.posicion = 'local' AND Partidos.goles_local = Partidos.goles_equipo_visitante THEN 'empato'
+                WHEN v.posicion = 'visitante' AND Partidos.goles_equipo_visitante > Partidos.goles_local THEN 'gano'
+                WHEN v.posicion = 'visitante' AND Partidos.goles_equipo_visitante < Partidos.goles_local THEN 'perdio'
+                WHEN v.posicion = 'visitante' AND Partidos.goles_equipo_visitante = Partidos.goles_local THEN 'empato'
+            END AS resultado
+
         FROM 
             (
                 SELECT 
                     Equipo_local AS Equipo,
+                    Equipo_visitante AS contrincante,
                     id_local AS id_equipo,
                     elo_local_despues AS elo_despues,
                     id_partido,
-                    elo_visitante_despues AS elo_oponente
+                    elo_visitante_despues AS elo_oponente,
+                    'local' AS posicion
+
                 FROM 
                     vista_elo 
                 WHERE id_local IN ({equipos_placeholder})
@@ -96,10 +113,12 @@ else:
 
                 SELECT 
                     Equipo_visitante AS Equipo,
+                     Equipo_local AS contrincante,
                     id_visitante AS id_equipo,
                     elo_visitante_despues AS elo_despues,
                     id_partido,
-                    elo_local_despues AS elo_oponente
+                    elo_local_despues AS elo_oponente,
+                    'visitante' AS posicion
                 FROM 
                     vista_elo 
                 WHERE id_visitante IN ({equipos_placeholder})
@@ -325,3 +344,63 @@ else:
             # Mostrar el gráfico en Streamlit
             st.subheader("Resultados de Partidos por Equipo")
             st.pyplot(plt)
+
+import pyttsx3
+import tempfile
+import os
+import streamlit as st
+import openai
+
+
+def obtener_analisis(data, max_tokens=500):
+    try:
+        # El contenido que vamos a enviar a OpenAI para el análisis
+        mensaje = f"""
+        Aquí está el gráfico de la evolución del ELO para los equipos seleccionados junto con los datos:
+
+        Datos:
+        {data}
+
+        Haz un análisis de los datos, al final dame una probabilidad de victoria por equipo, en porcentaje. Ejemplo: equipo A 67% de probabilidad frente a equipo B en el próximo partido y hay un 20 % probabilidad de empate. considera especialmente los ultimas tendencias
+        si se puede estima tambien probabilidad , al final debe decir equipo A 67% de probabilidad frente a equipo B
+        """
+
+        # Enviar solicitud a OpenAI para obtener el análisis usando el modelo de chat
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Asegúrate de usar el modelo correcto
+            messages=[
+                {"role": "system", "content": "Eres un analista de datos deportivo."},
+                {"role": "user", "content": mensaje}
+            ],
+            max_tokens=max_tokens,  # Limitar el número de tokens generados en la respuesta
+            temperature=0.7  # Ajusta la creatividad (0 = más predecible, 1 = más creativo)
+        )
+
+        analysis_text = response['choices'][0]['message']['content'].strip()
+
+        # Ejemplo de cómo podrías incluir las fórmulas de probabilidad en formato LaTeX
+        formula = r"""
+        P(A) = \frac{1}{1 + 10^{\frac{(ELO_B - ELO_A)}{400}}}
+        """
+
+        # Mostrar el análisis en Streamlit
+        st.subheader("Análisis de rendimiento y probabilidades de victoria")
+        st.write(analysis_text)
+
+        # Mostrar la fórmula en LaTeX en Streamlit
+        st.latex(formula)
+
+        return analysis_text
+
+    except Exception as e:
+        return f"Error en la consulta a OpenAI: {str(e)}"
+
+
+# Suponiendo que tienes los datos de entrada en la variable 'filtered_data'
+if st.button('Analizar rendimiento'):
+    # Obtener análisis de OpenAI basado en los datos generados
+    analysis_result = obtener_analisis(filtered_data)
+
+    # Mostrar el resultado en Streamlit
+    st.subheader("Análisis del Rendimiento")
+    st.write(analysis_result)

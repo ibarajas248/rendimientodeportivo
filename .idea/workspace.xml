@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fd8537dd-4f1a-43e3-b6c6-3c6c9a42ada9" name="Changes" comment="2025_">
+    <list default="true" id="fd8537dd-4f1a-43e3-b6c6-3c6c9a42ada9" name="Changes" comment="2025_1">
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -124,7 +124,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741136314458</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="2025_1">
+      <option name="closed" value="true" />
+      <created>1741136423470</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1741136423470</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -145,6 +153,7 @@
     <MESSAGE value="3" />
     <MESSAGE value="2025" />
     <MESSAGE value="2025_" />
-    <option name="LAST_COMMIT_MESSAGE" value="2025_" />
+    <MESSAGE value="2025_1" />
+    <option name="LAST_COMMIT_MESSAGE" value="2025_1" />
   </component>
 </project>
