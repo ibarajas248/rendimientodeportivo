@@ -130,6 +130,29 @@ else:
             filtered_data = dfEvolucionElo.head(max_partidos_slider)
             filtered_data['id_partido_aux'] = len(filtered_data) - np.arange(len(filtered_data))
 
+            # Selección de colores para cada equipo
+            st.sidebar.subheader("Colores de las líneas")
+            equipo_colores = {}
+            default_colors = ['#FF0000', '#0000FF']  # Rojo para el primero, azul para el segundo
+
+            # Obtener equipos únicos
+            equipos_unicos = list(set(filtered_data['Equipo']))
+
+            # Asignar colores
+            for idx, equipo in enumerate(equipos_unicos):
+                # Asignar color predeterminado para los dos primeros equipos
+                if idx < len(default_colors):
+                    default_color = default_colors[idx]
+                else:
+                    # Para los equipos restantes, asignar un color blanco por defecto
+                    default_color = '#FFFFFF'
+
+                # Muestra el selector de colores con el color predeterminado
+                color = st.sidebar.color_picker(f"Color para {equipo}", value=default_color)
+
+                # Guarda el color seleccionado
+                equipo_colores[equipo] = color
+
             # Crear gráfico de evolución de ELO
             st.subheader("Evolución del ELO para Equipos Seleccionados")
             plt.figure(figsize=(10, 8))
